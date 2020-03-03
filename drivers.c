@@ -229,6 +229,43 @@ static void graphic_clear_screen() {
 
 static uint8_t buffer[8][128];
 
+void old_pixel(uint8_t x, uint8_t y, uint8_t set) {
+    x++;
+    y++;
+	if (x > 128 || y > 64) {
+		return;
+	}
+	
+	uint8_t mask, realX, controller;
+	uint8_t	index = (y - 1) / 8;
+	
+	mask = 1 << ((y - 1) % 8);
+	if (set == 0) {
+		mask = ~mask;
+	}
+	
+	if (x > 64) {
+		controller = B_CS2;
+		realX = x - 65;
+	} else {
+		controller = B_CS1;
+		realX = x - 1;
+	}
+	
+	graphic_write_command(LCD_SET_ADD | realX, controller);
+	graphic_write_command(LCD_SET_PAGE | index, controller);
+	
+	uint8_t c = graphic_read_data(controller);
+	graphic_write_command(LCD_SET_ADD | realX, controller);
+	
+	if (set) {
+		mask = mask | c;
+	} else {
+		mask = mask & c;
+	}
+	
+	graphic_write_data(mask, controller);
+}
 
 void pixel(uint8_t x, uint8_t y, uint8_t set) {
 	if (x>127 || y>63) return;

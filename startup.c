@@ -8,8 +8,9 @@ __asm__ volatile(" MOV SP,R0\n");
 __asm__ volatile(" BL main\n");					/* call main */
 __asm__ volatile(".L1: B .L1\n");				/* never return */
 }
+#define SIMULATOR
 
-#define BOID_COUNT 3
+#define BOID_COUNT 2
 #define VIEW_DISTANCE 8
 
 #define ALIGNMENT_BIAS 0.0253
@@ -35,7 +36,8 @@ float squaredDistance(pBOID one, pBOID two) {
 static BOID boids[BOID_COUNT];
 
 void draw(pBOID self) {
-    pixel((uint8_t) self->x, (uint8_t) self->y, 1);
+    //pixel((uint8_t) self->x, (uint8_t) self->y, 1);
+    old_pixel((uint8_t) self->x, (uint8_t) self->y, 1);
 }
 
 void updatePos(pBOID self) {
@@ -94,7 +96,8 @@ void updateVel(pBOID self) {
 
 void createBoids() {
     for (int i = 0; i < BOID_COUNT; i++) {
-        boids[i] = (BOID) { 
+        boids[i] = (BOID) { 8.0, 31.0, 0.0, 0.0, draw, updatePos, updateVel };
+        /*boids[i] = (BOID) { 
             .x = i * 5.0 + 1.0, 
             .y = 31.0, 
             .xVel = 0.0, 
@@ -102,13 +105,15 @@ void createBoids() {
             draw,
             updatePos,
             updateVel
-        };
+        };*/
     }
 }
 
 
 void main(void) {
 	init();
+    
+    old_pixel(5, 5, 1);
 	clear_buffer();
 #ifndef SIMULATOR
 	draw_buffer();
@@ -119,14 +124,14 @@ void main(void) {
 	
     while (1) {
         for (int i = 0; i < BOID_COUNT; i++) {
-            boids[i].updateVel(&boids[i]);
+            //boids[i].updateVel(&boids[i]);
         }
         for (int i = 0; i < BOID_COUNT; i++) {
             boids[i].updatePos(&boids[i]);
             boids[i].draw(&boids[i]);
         }
         
-        draw_buffer();
+        //draw_buffer();
 		delay_milli(20);
     }
 }
