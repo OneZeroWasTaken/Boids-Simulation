@@ -9,157 +9,124 @@ __asm__ volatile(" BL main\n");					/* call main */
 __asm__ volatile(".L1: B .L1\n");				/* never return */
 }
 
+#define BOID_COUNT 3
+#define VIEW_DISTANCE 8
 
-
-typedef struct tPoint {
-    uint8_t x;
-    uint8_t y;
-} POINT;
-
-#define MAX_POINTS 20
-
-typedef struct tGeometry {
-    int numpoints;
-    int sizex;
-    int sizey;
-    POINT px[MAX_POINTS];
-} GEOMETRY, *PGEOMETRY;
-
-typedef struct tObj {
-    PGEOMETRY geo;
-    int dirx, diry;
-    int posx, posy;
-    void (* draw) (struct tObj *);
-    void (* clear) (struct tObj *);
-    void (* move) (struct tObj *);
-    void (* set_speed) (struct tObj *, int, int);
-} OBJECT, *POBJECT;
-
-void set_object_speed(POBJECT o, int speedx, int speedy) {
-    o->dirx = speedx;
-    o->diry = speedy;
-}
-
-void draw_object(POBJECT o) {
-	/*
-    int numpoints = o->geo->numpoints;
-    for (int i = 0; i < numpoints; i++) {
-        POINT p = o->geo->px[i];
-        pixel(o->posx + p.x, o->posy + p.y, 1);
-    }
-	*/
-	 paint(o, 1);
-}
-
-void clear_object(POBJECT o) {
-	/*
-    int numpoints = o->geo->numpoints;
-    for (int i = 0; i < numpoints; i++) {
-        POINT p = o->geo->px[i];
-        pixel(o->posx + p.x, o->posy + p.y, 0);
-    }
-	 * */
-	 paint(o, 0);
-}
-
-void paint(POBJECT o, int color) {
-    int width = o->geo->sizex;
-    int height = o->geo->sizey;
-	int r = width/2;
-	for (int y=0; y<height; y++) {
-		for (int x=0; x<width; x++) {
-			int xr = x-width/2;
-			int yr = y-height/2;
-			if (xr*xr+yr*yr < r*r)
-				pixel(o->posx + x, o->posy + y, color);
-		}
-	}
-}
-
-void move_object(POBJECT o) {
-    clear_object(o);
-    int newx = o->posx + o->dirx;
-    int newy = o->posy + o->diry;
-    int width = o->geo->sizex;
-    int height = o->geo->sizey;
-    o->posx = newx;
-    o->posy = newy;
-    if (newx < 1) {
-        o->dirx *= -1;
-    }
-    if (newx + width > 128) {
-        o->dirx *= -1;
-    }
-    if (newy < 1) {
-        o->diry *= -1;
-    }
-    if (newy + height > 64) {
-        o->diry *= -1;
-    }
-    draw_object(o);
-}
-
-GEOMETRY ball_geometry = {
-    12,
-    30,30,
-    {
-        {0,1}, {0,2}, {1,0}, {1,1}, {1,2},
-        {1,3}, {2,0}, {2,1}, {2,2}, {2,3},
-        {3,1}, {3,2}
-    }
-};
-
-static OBJECT ball = {
-    &ball_geometry,
-    1,1,
-    50,30,
-    draw_object,
-    clear_object,
-    move_object,
-    set_object_speed
-};
-
+#define ALIGNMENT_BIAS 0.0253
+#define COHESION_BIAS 0.0253
+#define SEPARATION_BIAS 0.253
 
 typedef struct tBoid {
-	int x, y;
-	int xvel, yvel;
+	float x, y;
+	float xVel, yVel;
+    
+    void (* draw) (struct tBoid *);
+    void (* updatePos) (struct tBoid *);
+    void (* updateVel) (struct tBoid *);
 } BOID, *pBOID;
 
+float squaredDistance(pBOID one, pBOID two) {
+    float xD = two->x - one->x;
+    float yD = two->y - one->y;
+    return xD * xD + yD + yD;
+}
+
+
+static BOID boids[BOID_COUNT];
+
+void draw(pBOID self) {
+    pixel((uint8_t) self->x, (uint8_t) self->y, 1);
+}
+
+void updatePos(pBOID self) {
+    self->x += self->xVel;
+    self->y += self->yVel;
+}
+
+void updateVel(pBOID self) {
+    int nearbyCount = 0;
+    float sumXPos = 0, sumYPos = 0;
+    float sumXVel = 0, sumYVel = 0;
+    float dXSeparation = 0, dYSeparation = 0;
+    
+    for (int i = 0; i < BOID_COUNT; i++) {
+        pBOID other = &boids[i];
+        float dSquared = squaredDistance(self, other);
+        if (dSquared > VIEW_DISTANCE * VIEW_DISTANCE) {
+            continue;
+        }
+        if (self == other) {
+            continue;
+        }
+        nearbyCount++;
+        
+        // Cohesion
+        sumXPos += other->x;
+        sumYPos += other->y;
+        
+        // Alignment
+        sumXVel += other->x;
+        sumXVel += other->y;
+        
+        // Separation
+        dXSeparation += (self->x - other->x) / dSquared;
+        dYSeparation += (self->y - other->y) / dSquared;
+    }
+    
+    // Cohesion
+    float avgXPos = sumXPos / nearbyCount;
+    float avgYPos = sumYPos / nearbyCount;
+    
+    float dXCohesion = avgXPos - self->x;
+    float dYCohesion = avgYPos - self->y;
+    
+    // Alignment
+    float avgXVel = sumXVel / nearbyCount;
+    float avgYVel = sumYVel / nearbyCount;
+    
+    float dXAlignment = avgXVel - self->xVel;
+    float dYAlignment = avgYVel - self->yVel;
+    
+    // Calculate new acceleration for the Boid
+    self->xVel += dXSeparation * SEPARATION_BIAS + dXCohesion * COHESION_BIAS + dXAlignment * ALIGNMENT_BIAS;
+    self->yVel += dYSeparation * SEPARATION_BIAS + dYCohesion * COHESION_BIAS + dYAlignment * ALIGNMENT_BIAS;
+}
+
+void createBoids() {
+    for (int i = 0; i < BOID_COUNT; i++) {
+        boids[i] = (BOID) { 
+            .x = i * 5.0 + 1.0, 
+            .y = 31.0, 
+            .xVel = 0.0, 
+            .yVel = 0.0,
+            draw,
+            updatePos,
+            updateVel
+        };
+    }
+}
 
 
 void main(void) {
-    POBJECT p = &ball;
 	init();
-	
 	clear_buffer();
-	pixel(0, 1, 1);
-	uint8_t data = buffer[0][0];
-	//draw_buffer();
-
-    for (int i = 0; i < 128; i++) {
-        pixel(i, 0, 1);
-        pixel(i, 63, 1);
-    }
-    for (int i = 0; i < 64; i++) {
-        pixel(0, i, 1);
-        pixel(127, i, 1);
-    }
-    draw_buffer();
-	
-	int speed = 4;
-    p->set_speed(p, speed, 0);
-	char c;
-    while(1) {
-        p->move(p);
-		c = keyb();
-		out7seg(c);
-		switch (c) {
-			case 6: p->set_speed(p, speed, 0); break;
-			case 2: p->set_speed(p, 0, -speed); break;
-			case 4: p->set_speed(p, -speed, 0); break;
-			case 5: p->set_speed(p, 0, speed); break;
-		}
+#ifndef SIMULATOR
 	draw_buffer();
+#endif
+
+    createBoids();
+    
+	
+    while (1) {
+        for (int i = 0; i < BOID_COUNT; i++) {
+            boids[i].updateVel(&boids[i]);
+        }
+        for (int i = 0; i < BOID_COUNT; i++) {
+            boids[i].updatePos(&boids[i]);
+            boids[i].draw(&boids[i]);
+        }
+        
+        draw_buffer();
 		delay_milli(20);
     }
 }
