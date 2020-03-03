@@ -121,9 +121,9 @@ static OBJECT ball = {
 
 
 typedef struct tBoid {
-	int x, y,
-	int xvel, yvel,
-} BOID, *BOID;
+	int x, y;
+	int xvel, yvel;
+} BOID, *pBOID;
 
 
 
@@ -134,7 +134,7 @@ void main(void) {
 	clear_buffer();
 	pixel(0, 1, 1);
 	uint8_t data = buffer[0][0];
-	draw_buffer();
+	//draw_buffer();
 
     for (int i = 0; i < 128; i++) {
         pixel(i, 0, 1);
@@ -144,6 +144,7 @@ void main(void) {
         pixel(0, i, 1);
         pixel(127, i, 1);
     }
+    draw_buffer();
 	
 	int speed = 4;
     p->set_speed(p, speed, 0);

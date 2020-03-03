@@ -1,5 +1,8 @@
 #include "drivers.h"
 
+//#define USBDM
+#define SIMULATOR
+
 #define PORT_BASE   ((volatile unsigned int *) 0x40021000)
 
 #define portModer   ((volatile unsigned int *) 0x40021000)
@@ -62,6 +65,11 @@ static void delay_500ns(void) {
 }
 
 void delay_mikro(unsigned int us) {
+    #ifdef SIMULATOR
+        if (us > 500) {
+            us = 1;
+        }
+    #endif
     while (us > 0) {
         delay_250ns();
         delay_250ns();
@@ -73,8 +81,7 @@ void delay_mikro(unsigned int us) {
 
 void delay_milli(unsigned int ms) {
     #ifdef SIMULATOR
-        ms = ms/1000;
-        ms++;
+        ms = 1;
     #endif
     while (ms > 0) {
         delay_mikro(1000);
@@ -266,7 +273,6 @@ void draw_buffer() {
 	}
 }
 
-#define USBDM
 
 void init() {
 	#ifdef USBDM
