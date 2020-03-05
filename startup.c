@@ -14,10 +14,50 @@ __asm__ volatile(".L1: B .L1\n");				/* never return */
 #define BOID_COUNT 100
 #define VIEW_DISTANCE 15
 
-#define ALIGNMENT_BIAS 0.008
+#define ALIGNMENT_BIAS 0.33
 #define COHESION_BIAS 0.1
-#define SEPARATION_BIAS 0.06
-#define MAX_SPEED 4
+#define SEPARATION_BIAS 0.05
+#define MAX_SPEED 14
+#define MIN_SPEED 1
+#define BALL_FORCE 50
+#define BALL_SPEED 5
+
+
+typedef struct tBall {
+	int x, y;
+	int radius;
+} BALL, *pBALL;
+
+static BALL ball = {63, 31, 2};
+
+void drawBall() {
+	for (int y = -ball.radius; y < ball.radius; y++) {
+		for (int x = -ball.radius; x < ball.radius; x++) {
+			if (x*x+y*y < ball.radius*ball.radius) {
+				pixel(ball.x+x, ball.y+y, 1);
+			}
+		}
+	}
+}
+
+void updateBall() {
+	switch (keyb()) {
+		case 2:
+			ball.y -= BALL_SPEED;
+			break;
+		case 4:
+			ball.x -= BALL_SPEED;
+			break;
+		case 5:
+			ball.y += BALL_SPEED;
+			break;
+		case 6:
+			ball.x += BALL_SPEED;
+			break;
+	}
+	ball.x = (ball.x + 128) % 128;
+	ball.y = (ball.y + 64) % 64;
+}
 
 typedef struct tBoid {
 	float x, y;
@@ -104,14 +144,32 @@ void updateVel(pBOID self) {
         sumYPos += self->y+dy;
         
         // Alignment
-        sumXVel += self->x+dx;
-        sumXVel += self->y+dy;
+        sumXVel += other->xVel;
+        sumXVel += other->yVel;
         
         // Separation
 		float d = root(dSquared);
         dXSeparation += (-dx) / d;
         dYSeparation += (-dy) / d;
     }
+	
+	float dx = ball.x - self->x;
+	float dy = ball.y - self->y;
+	if (abs(dx) > 63) {
+		dx = 128 - dx;
+	}
+	if (abs(dy) > 31) {
+		dy = 64 - dy;
+	}
+	float dSquared = dx * dx + dy * dy;
+	if (dSquared <= VIEW_DISTANCE * VIEW_DISTANCE) {
+		float d = root(dSquared);
+		dXSeparation += ((-dx) / d)*BALL_FORCE;
+		dYSeparation += ((-dy) / d)*BALL_FORCE;
+		nearbyCount++;
+	}
+	
+	
 	
 	if (nearbyCount == 0) {
 		return;
@@ -139,6 +197,10 @@ void updateVel(pBOID self) {
 		self->xVel *= 0.9;
 		self->yVel *= 0.9;
 	}
+	while (self->xVel * self->xVel + self->yVel * self->yVel < MIN_SPEED * MIN_SPEED) {
+		self->xVel *= 1.1;
+		self->yVel *= 1.1;
+	}
 }
 
 void createBoids() {
@@ -147,8 +209,8 @@ void createBoids() {
         boids[i] = (BOID) { 
             .x = (i * 105 + 10.0), 
             .y = (i * 10 + 10.0), 
-            .xVel = 0.0, 
-            .yVel = 0.0,
+            .xVel = (i%2)-0.5,
+            .yVel = (i%3)-0.75,
             draw,
             updatePos,
             updateVel
@@ -164,15 +226,18 @@ void main(void) {
 #ifndef SIMULATOR
 	draw_buffer();
 #endif
-
-    createBoids();
-    
+	createBoids();
 	
     while (1) {
 		clear_buffer();
+		if (keyb() == 0x0D) {
+			createBoids();
+		}
+		updateBall();
         for (int i = 0; i < BOID_COUNT; i++) {
-            boids[i].updateVel(&boids[i]);
+			boids[i].updateVel(&boids[i]);
         }
+		drawBall();
         for (int i = 0; i < BOID_COUNT; i++) {
             boids[i].updatePos(&boids[i]);
             boids[i].draw(&boids[i]);
