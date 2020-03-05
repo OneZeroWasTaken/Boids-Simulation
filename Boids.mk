@@ -5,15 +5,15 @@
 ## Debug
 ProjectName            :=Boids
 ConfigurationName      :=Debug
-WorkspacePath          :=C:/Users/Eriksson/Documents/Chalmers/MOP/CodeLite
-ProjectPath            :=C:/Users/Eriksson/Documents/Chalmers/MOP/Boids-Simulation
+WorkspacePath          :=C:/Users/oskargi/Documents/workspace
+ProjectPath            :=C:/Users/oskargi/Downloads/boids/Boids-Simulation
 IntermediateDirectory  :=./Debug
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
-User                   :=Eriksson
-Date                   :=03/03/2020
+User                   :=oskargi
+Date                   :=05/03/2020
 CodeLitePath           :=C:/cseapp/CodeLite
 LinkerName             :=$(CodeLiteDir)/tools/gcc-arm/bin/arm-none-eabi-g++.exe
 SharedObjectLinkerName :=$(CodeLiteDir)/tools/gcc-arm/arm-none-eabi-g++.exe -shared -fPIC
@@ -104,7 +104,7 @@ PreBuild:
 ## Objects
 ##
 $(IntermediateDirectory)/startup.c$(ObjectSuffix): startup.c $(IntermediateDirectory)/startup.c$(DependSuffix)
-	$(CC) $(SourceSwitch) "C:/Users/Eriksson/Documents/Chalmers/MOP/Boids-Simulation/startup.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/startup.c$(ObjectSuffix) $(IncludePath)
+	$(CC) $(SourceSwitch) "C:/Users/oskargi/Downloads/boids/Boids-Simulation/startup.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/startup.c$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/startup.c$(DependSuffix): startup.c
 	@$(CC) $(CFLAGS) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/startup.c$(ObjectSuffix) -MF$(IntermediateDirectory)/startup.c$(DependSuffix) -MM startup.c
 
@@ -112,7 +112,7 @@ $(IntermediateDirectory)/startup.c$(PreprocessSuffix): startup.c
 	$(CC) $(CFLAGS) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/startup.c$(PreprocessSuffix) startup.c
 
 $(IntermediateDirectory)/drivers.c$(ObjectSuffix): drivers.c $(IntermediateDirectory)/drivers.c$(DependSuffix)
-	$(CC) $(SourceSwitch) "C:/Users/Eriksson/Documents/Chalmers/MOP/Boids-Simulation/drivers.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/drivers.c$(ObjectSuffix) $(IncludePath)
+	$(CC) $(SourceSwitch) "C:/Users/oskargi/Downloads/boids/Boids-Simulation/drivers.c" $(CFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/drivers.c$(ObjectSuffix) $(IncludePath)
 $(IntermediateDirectory)/drivers.c$(DependSuffix): drivers.c
 	@$(CC) $(CFLAGS) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/drivers.c$(ObjectSuffix) -MF$(IntermediateDirectory)/drivers.c$(DependSuffix) -MM drivers.c
 

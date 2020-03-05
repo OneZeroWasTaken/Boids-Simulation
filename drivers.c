@@ -1,7 +1,7 @@
 #include "drivers.h"
 
-//#define USBDM
-#define SIMULATOR
+#define USBDM
+//#define SIMULATOR
 
 #define PORT_BASE   ((volatile unsigned int *) 0x40021000)
 
